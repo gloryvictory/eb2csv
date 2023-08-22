@@ -6,13 +6,14 @@ from time import strftime  # Load just the strftime Module from Time
 
 API_VERSION = "/api/v1"
 
-DATETIME_CURRENT = str(strftime("%Y-%m-%d-%H-%M-%S"))
+# DATETIME_CURRENT = str(strftime("%Y-%m-%d-%H-%M-%S"))
 
 FILE_LOG_NAME = 'eb2csv'
-FILE_LOG = DATETIME_CURRENT + '_' + FILE_LOG_NAME + '.log'
+FILE_LOG = FILE_LOG_NAME + '.log'
 FILE_LOG_FORMAT = '%(asctime)s %(levelname)s %(message)s'
 
 
+FILE_IN = "eb.json"
 # FOLDER_BASE = os.getenv("FOLDER_BASE", "C:\\Glory\\Projects\\Python\\")
 FOLDER_OUT = 'log'
 FOLDER_GEOJSON_OUT = 'geojson'
