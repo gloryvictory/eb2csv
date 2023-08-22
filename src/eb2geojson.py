@@ -49,32 +49,44 @@ def make_geodf(df, lat_col_name='latitude', lon_col_name='longitude'):
 
 def get_title_from_html_div(str_in: str):
     str_out = ''
-    soup = BeautifulSoup(str_in, 'html.parser')
-    str_out = soup.get_text().strip()
+    try:
+        soup = BeautifulSoup(str_in, 'html.parser')
+        str_out = soup.get_text().strip()
+    except Exception as e:
+        print(f"get_title_from_html_div {str_in}. Exception occurred {str(e)}")
     return str_out
 
 
 def get_href_from_html_div(str_in: str):
     str_out = ''
-    soup = BeautifulSoup(str_in, 'html.parser')
-    soup1 = soup.find('a')
-    str_out = soup1['href']
+    try:
+        soup = BeautifulSoup(str_in, 'html.parser')
+        soup1 = soup.find('a')
+        str_out = soup1['href']
+    except Exception as e:
+        print(f"get_href_from_html_div {str_in}. Exception occurred {str(e)}")
     return str_out
 
 
 def get_href_from_html_img(str_in: str):
     str_out = ''
-    soup = BeautifulSoup(str_in, 'html.parser')
-    soup1 = soup.find('img')
-    str_out = soup1['src']
+    try:
+        soup = BeautifulSoup(str_in, 'html.parser')
+        soup1 = soup.find('img')
+        str_out = soup1['src']
+    except Exception as e:
+        print(f"get_href_from_html_img {str_in}. Exception occurred {str(e)}")
     return str_out
 
 
 def get_alt_from_html_img(str_in: str):
     str_out = ''
-    soup = BeautifulSoup(str_in, 'html.parser')
-    soup1 = soup.find('img')
-    str_out = soup1['alt'].replace('&quot;','\"')
+    try:
+        soup = BeautifulSoup(str_in, 'html.parser')
+        soup1 = soup.find('img')
+        str_out = soup1['alt'].replace('&quot;','')
+    except Exception as e:
+        print(f"get_alt_from_html_img {str_in}. Exception occurred {str(e)}")
     return str_out
 
 
@@ -89,17 +101,20 @@ def geojson_load():
 
     try:
         gdf = geopandas.read_file(file_geojson_in, driver="GeoJSON")
+        test_str = r"<div style=\"display: flex; justify-content: space-between; align-items: center; gap: 15px;\">\n        Нефтепродуктоперекачивающая станция (НППС)\n        <a href=\"https://energybase.ru/midstream/westernsiberia-transneft\"><img src=\"https://storage.energybase.ru/thumbnails/100x100/24/1012687.png\" width=\"100\" height=\"10\" alt=\"АО «Транснефть – Западная Сибирь»\"></a>\n    </div>"
+        tt = get_href_from_html_div(test_str)
 
         # Записываем координаты в отдельную колонку
         for i in range(0, len(gdf)):
             gdf.loc[i, 'lon'] = gdf.geometry.y.iloc[i]
             gdf.loc[i, 'lat'] = gdf.geometry.x.iloc[i]
-            gdf.loc[i, 'title'] = get_title_from_html_div(gdf['balloonContentHeader'].iloc[i])
-            gdf.loc[i, 'title_href'] = get_href_from_html_div(gdf['balloonContentHeader'].iloc[i])
-            gdf.loc[i, 'img_href'] = get_href_from_html_img(gdf['balloonContentHeader'].iloc[i])
-            gdf.loc[i, 'img_alt'] = get_alt_from_html_img(gdf['balloonContentHeader'].iloc[i])
+            header_html = gdf['balloonContentHeader'].iloc[i]
+            gdf.loc[i, 'title'] = get_title_from_html_div(header_html)
+            gdf.loc[i, 'title_href'] = get_href_from_html_div(header_html)
+            gdf.loc[i, 'img_href'] = get_href_from_html_img(header_html)
+            gdf.loc[i, 'img_alt'] = get_alt_from_html_img(header_html)
             str_temp =  gdf.loc[i, 'img_alt']
-            print(str_temp)
+            print(f"{i} as {str_temp}")
 
         # Меняем координаты местами
         gdf1 = geopandas.GeoDataFrame(
@@ -108,22 +123,6 @@ def geojson_load():
 
         gdf1.to_file(file_geojson_out, driver='GeoJSON')
 
-        # gdf['coordinates'] = list(zip(gdf.geometry.y, gdf.geometry.x))
-        # gdf['coordinates'] = gdf['coordinates'].apply(Point)
-        # gdf = GeoDataFrame(point_data, geometry='coordinates', crs=4326)
-        # gdf['coordinates'] = gdf.apply(lambda row: Point(row['y'], row['x']), axis=1)
-        # gdf1 = GeoDataFrame(gdf, crs=4326)
-
-        # gdf1.set_geometry("centroid")
-        # gdf1 = gdf1.rename(columns={'centroid': 'geom'}).set_geometry('geom')
-        # gdf1 = gdf1.to_crs(crs=crs_out)
-
-        # gdf2 = gdf1.GeoSeries(gdf1['coordinates']).map(lambda polygon: shapely.ops.transform(lambda x, y: (y, x), polygon))
-        # gdf1 = GeoSeries(gdf['coordinates']).map(lambda point: shapely.transform(lambda x, y: (y, x), point))
-        # gdf1 = gdf
-
-        # gdf['lon'] = gdf.point_object.x
-        # gdf['lat'] = gdf.point_object.y
 
         # for i in range(0, len(gdf)):
         #     _lon = gdf.geometry.x.iloc[i]
@@ -133,23 +132,6 @@ def geojson_load():
         #     gdf.geometry.x.iloc[i] = _lat
         #     gdf.geometry.y.iloc[i] = _lon
 
-        # gdf.set_geometry('geom', inplace=True)
-        # gdf.loc[i, 'lat'] = gdf.geometry.centroid.y.iloc[i]
-        # gdf.loc[i, 'lat'] = gdf.geometry.centroid.y.iloc[i]
-        # gdf['geometry'] = gdf.apply(lambda row: Point(row['y'], row['x']))
-        # gdf1 = GeoDataFrame(gdf, crs=4326)
-
-        # for i in range(0, len(gdf1)):
-        #     gdf1.loc[i, 'lon'] = gdf1.geometry.centroid.x.iloc[i]
-        #     gdf1.loc[i, 'lat'] = gdf1.geometry.centroid.y.iloc[i]
-        # # log = set_logger(settings.NGP_FILE_LOG)
-        #
-        # for i in range(0, len(gdf1)):
-        #     str_name = str(gdf1.loc[i, name_field]).lower().encode()
-        # lon=gdf1.loc[i, 'lon'],
-        # lat=gdf1.loc[i, 'lat'],
-        # print(gdf1.loc[i, 'name_ru'])
-        # log.info(f"Total NGP count {count}")
     except Exception as e:
         print("Exception occurred " + str(e))
 
