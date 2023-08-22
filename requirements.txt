@@ -4,3 +4,4 @@ beautifulsoup4
 geopandas
 openpyxl
 boto3
+lxml

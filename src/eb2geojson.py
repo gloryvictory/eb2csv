@@ -11,8 +11,9 @@ import logging
 
 import shapely
 import geopandas
-from geopandas import GeoDataFrame, GeoSeries
-from shapely.geometry import Point
+# from geopandas import GeoDataFrame, GeoSeries
+# from shapely.geometry import Point
+from bs4 import BeautifulSoup
 
 import cfg
 
@@ -21,6 +22,16 @@ import cfg
 # from bs4 import BeautifulSoup
 # import random
 # from time import sleep
+
+
+# for anchor in soup.findAll('a'):
+#     print
+#     anchor['href'], anchor.string
+# soup = BeautifulSoup(str_in, "lxml")
+# news_para = soup.find_all("div", text=True)
+# for item in news_para:
+#     # SPLIT WORDS, JOIN WORDS TO REMOVE EXTRA SPACES
+#     str_out = (' ').join((item.text).split())
 
 
 def make_geodf(df, lat_col_name='latitude', lon_col_name='longitude'):
@@ -34,6 +45,37 @@ def make_geodf(df, lat_col_name='latitude', lon_col_name='longitude'):
     lat = df['latitude']
     lon = df['longitude']
     return GeoDataFrame(df, geometry=points_from_xy(lon, lat))
+
+
+def get_title_from_html_div(str_in: str):
+    str_out = ''
+    soup = BeautifulSoup(str_in, 'html.parser')
+    str_out = soup.get_text().strip()
+    return str_out
+
+
+def get_href_from_html_div(str_in: str):
+    str_out = ''
+    soup = BeautifulSoup(str_in, 'html.parser')
+    soup1 = soup.find('a')
+    str_out = soup1['href']
+    return str_out
+
+
+def get_href_from_html_img(str_in: str):
+    str_out = ''
+    soup = BeautifulSoup(str_in, 'html.parser')
+    soup1 = soup.find('img')
+    str_out = soup1['src']
+    return str_out
+
+
+def get_alt_from_html_img(str_in: str):
+    str_out = ''
+    soup = BeautifulSoup(str_in, 'html.parser')
+    soup1 = soup.find('img')
+    str_out = soup1['alt'].replace('&quot;','\"')
+    return str_out
 
 
 def geojson_load():
@@ -52,12 +94,17 @@ def geojson_load():
         for i in range(0, len(gdf)):
             gdf.loc[i, 'lon'] = gdf.geometry.y.iloc[i]
             gdf.loc[i, 'lat'] = gdf.geometry.x.iloc[i]
+            gdf.loc[i, 'title'] = get_title_from_html_div(gdf['balloonContentHeader'].iloc[i])
+            gdf.loc[i, 'title_href'] = get_href_from_html_div(gdf['balloonContentHeader'].iloc[i])
+            gdf.loc[i, 'img_href'] = get_href_from_html_img(gdf['balloonContentHeader'].iloc[i])
+            gdf.loc[i, 'img_alt'] = get_alt_from_html_img(gdf['balloonContentHeader'].iloc[i])
+            str_temp =  gdf.loc[i, 'img_alt']
+            print(str_temp)
 
         # Меняем координаты местами
         gdf1 = geopandas.GeoDataFrame(
             gdf, geometry=geopandas.points_from_xy(gdf.geometry.y, gdf.geometry.x), crs="EPSG:4326"
         )
-
 
         gdf1.to_file(file_geojson_out, driver='GeoJSON')
 
