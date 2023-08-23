@@ -47,6 +47,17 @@ def make_geodf(df, lat_col_name='latitude', lon_col_name='longitude'):
     return GeoDataFrame(df, geometry=points_from_xy(lon, lat))
 
 
+def get_id_name(str_in: str):
+    str_out = ''
+    try:
+        str_out = str_in.replace("CompressorStation", "CS_")
+    except Exception as e:
+        print(f"get_title_from_html_div {str_in}. Exception occurred {str(e)}")
+        if len(str_in):
+            str_out = str_in
+    return str_out
+
+
 def get_title_from_html_div(str_in: str):
     str_out = ''
     try:
@@ -54,6 +65,8 @@ def get_title_from_html_div(str_in: str):
         str_out = soup.get_text().strip()
     except Exception as e:
         print(f"get_title_from_html_div {str_in}. Exception occurred {str(e)}")
+        if len(str_in):
+            str_out = str_in
     return str_out
 
 
@@ -65,6 +78,7 @@ def get_href_from_html_div(str_in: str):
         str_out = soup1['href']
     except Exception as e:
         print(f"get_href_from_html_div {str_in}. Exception occurred {str(e)}")
+
     return str_out
 
 
@@ -84,9 +98,53 @@ def get_alt_from_html_img(str_in: str):
     try:
         soup = BeautifulSoup(str_in, 'html.parser')
         soup1 = soup.find('img')
-        str_out = soup1['alt'].replace('&quot;','')
+        str_out = soup1['alt'].replace('&quot;', '')
     except Exception as e:
         print(f"get_alt_from_html_img {str_in}. Exception occurred {str(e)}")
+    return str_out
+
+
+def get_dir_from_table(str_in: str):
+    str_out = ''
+    try:
+        soup = BeautifulSoup(str_in, 'html.parser')
+        # soup1 = soup.find('table').find('tr').find('td')
+        soup2 = soup.find_all('td')
+
+        for soup_current in soup2:
+            str_tmp = soup_current.contents[0]
+            if str_tmp.lower().startswith("направление"):
+                str_out = str_tmp
+    except Exception as e:
+        print(f"get_href_from_html_div {str_in}. Exception occurred {str(e)}")
+        if len(str_in):
+            str_out = "нет данных"
+    return str_out
+
+
+def get_dir_href_from_table(str_in: str):
+    str_out = ''
+    try:
+        soup = BeautifulSoup(str_in, 'html.parser')
+        soup1 = soup.find('table').find('tr').find('a')
+        str_out = soup1['href']
+    except Exception as e:
+        print(f"get_href_from_html_div {str_in}. Exception occurred {str(e)}")
+        if len(str_in):
+            str_out = "нет данных"
+    return str_out
+
+
+def get_dir_text_from_table(str_in: str):
+    str_out = ''
+    try:
+        soup = BeautifulSoup(str_in, 'html.parser')
+        soup1 = soup.find('table').find('tr').find('a')
+        str_out = soup1.contents[0]
+    except Exception as e:
+        print(f"get_href_from_html_div {str_in}. Exception occurred {str(e)}")
+        if len(str_in):
+            str_out = "нет данных"
     return str_out
 
 
@@ -101,28 +159,39 @@ def geojson_load():
 
     try:
         gdf = geopandas.read_file(file_geojson_in, driver="GeoJSON")
-        test_str = r"<div style=\"display: flex; justify-content: space-between; align-items: center; gap: 15px;\">\n        Нефтепродуктоперекачивающая станция (НППС)\n        <a href=\"https://energybase.ru/midstream/westernsiberia-transneft\"><img src=\"https://storage.energybase.ru/thumbnails/100x100/24/1012687.png\" width=\"100\" height=\"10\" alt=\"АО «Транснефть – Западная Сибирь»\"></a>\n    </div>"
-        tt = get_href_from_html_div(test_str)
 
         # Записываем координаты в отдельную колонку
         for i in range(0, len(gdf)):
             gdf.loc[i, 'lon'] = gdf.geometry.y.iloc[i]
             gdf.loc[i, 'lat'] = gdf.geometry.x.iloc[i]
-            header_html = gdf['balloonContentHeader'].iloc[i]
-            gdf.loc[i, 'title'] = get_title_from_html_div(header_html)
-            gdf.loc[i, 'title_href'] = get_href_from_html_div(header_html)
-            gdf.loc[i, 'img_href'] = get_href_from_html_img(header_html)
-            gdf.loc[i, 'img_alt'] = get_alt_from_html_img(header_html)
-            str_temp =  gdf.loc[i, 'img_alt']
+            #  Обрабатываем заголовок (тот html, который там находится)
+            html_header = gdf['balloonContentHeader'].iloc[i]
+
+            gdf.loc[i, 'id_name'] = get_id_name(gdf['id'].iloc[i])
+            gdf.loc[i, 'title'] = get_title_from_html_div(html_header)
+            gdf.loc[i, 'title_href'] = get_href_from_html_div(html_header)
+            gdf.loc[i, 'img_href'] = get_href_from_html_img(html_header)
+            gdf.loc[i, 'img_alt'] = get_alt_from_html_img(html_header)
+
+            #  Обрабатываем body (тот html, который там находится)
+            html_body = gdf['balloonContentBody'].iloc[i]
+            # Направление
+            gdf.loc[i, 'dir'] = get_dir_from_table(html_body)
+            gdf.loc[i, 'dir_href'] = get_dir_href_from_table(html_body)
+            gdf.loc[i, 'dir_text'] = get_dir_text_from_table(html_body)
+
+
+
+            str_temp = gdf.loc[i, 'dir']
             print(f"{i} as {str_temp}")
 
         # Меняем координаты местами
         gdf1 = geopandas.GeoDataFrame(
             gdf, geometry=geopandas.points_from_xy(gdf.geometry.y, gdf.geometry.x), crs="EPSG:4326"
         )
-
+        gdf1 = gdf1.rename(columns={'iconImageHref': 'icon_href'})
+        gdf1 = gdf1.rename(columns={'clusterCaption': 'name_ru'})
         gdf1.to_file(file_geojson_out, driver='GeoJSON')
-
 
         # for i in range(0, len(gdf)):
         #     _lon = gdf.geometry.x.iloc[i]

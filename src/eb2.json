@@ -1,0 +1,67 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+
+
+    {
+      "id": "CompressorStation856",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          51.515713,
+          39.402852
+        ]
+      },
+      "properties": {
+        "balloonContentHeader": "<div style=\"display: flex; justify-content: space-between; align-items: center; gap: 15px;\">\n        Линейная производственно-диспетчерская станция (ЛПДС)\n        <a href=\"https://energybase.ru/midstream/druzhba-transneft\"><img src=\"https://storage.energybase.ru/thumbnails/100x100/24/1012684.png\" width=\"100\" height=\"10\" alt=\"АО «Транснефть – Дружба»\"></a>\n    </div>",
+        "balloonContentBody": "<table><tr><td colspan=\"2\">Направление поставок (города)<br>Лиски</td></tr></table>",
+        "balloonContentFooter": "",
+        "clusterCaption": "ЛПДС Воронеж"
+      },
+      "options": {
+        "hideIconOnBalloonOpen": true,
+        "iconLayout": "default#image",
+        "iconImageHref": "https://energybase.ru/images/map-icons/compressor-station/cs-oil-gray.svg",
+        "iconImageSize": [
+          33,
+          40
+        ],
+        "iconImageOffset": [
+          -15,
+          -40
+        ]
+      }
+    },
+    {
+      "id": "CompressorStation857",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          58.167073,
+          56.014035
+        ]
+      },
+      "properties": {
+        "balloonContentHeader": "Нефтепродуктоперекачивающая станция (НППС)",
+        "balloonContentBody": "<table></table>",
+        "balloonContentFooter": "",
+        "clusterCaption": "НПС Северокамская"
+      },
+      "options": {
+        "hideIconOnBalloonOpen": true,
+        "iconLayout": "default#image",
+        "iconImageHref": "https://energybase.ru/images/map-icons/compressor-station/cs-oil-brown.svg",
+        "iconImageSize": [
+          33,
+          40
+        ],
+        "iconImageOffset": [
+          -15,
+          -40
+        ]
+      }
+    }
+  ]
+}
